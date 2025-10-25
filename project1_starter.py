@@ -58,6 +58,9 @@ def create_character(name, character_class):
     if stats is None:  # Check for invalid class
         return None
     strength, magic, health = stats  # Unpack stats into variables
+    # Ensure name is a string; if None, set to empty string
+    if name is None:
+        name = ""
     # Create the character dictionary
     character = {
         "name": name,
@@ -83,9 +86,13 @@ def save_character(character, filename):
     Returns:
     - bool: True if successful, False otherwise
     """
-    # Return False if character or filename is invalid
+    # Check if character or filename is invalid
     if character is None or filename == "" or filename is None:
         return False
+    # Check if directory exists
+    directory = filename.rsplit("/", 1)
+    if len(directory) > 1 and not os.path.exists(directory[0]):
+        return False  # Directory does not exist
     # Open the file for writing
     f = open(filename, "w")
     # Write each field in the required format
@@ -112,12 +119,11 @@ def load_character(filename):
     - dict: Character dictionary if successful
     - None if file not found or empty
     """
-    # Check if file exists
-    try:
-        f = open(filename, "r")
-    except:
+    # Check if file exists manually
+    if not os.path.exists(filename):
         return None  # Return None if file does not exist
 
+    f = open(filename, "r")
     character = {}  # Initialize empty dictionary
     # Read file line by line
     for line in f:
