@@ -1,35 +1,31 @@
 """
 COMP 163 - Project 1: Character Creator & Saving/Loading
-Name: [D'ante Davis]
-Date: [10/22/2025]
+Name: D'ante Davis
+Date: 10/22/2025
 
 AI Usage: AI was used to improve clarity and ensure test compatibility.
 """
 
 def calculate_stats(character_class, level):
     """
-    Calculates a character's strength, magic, and health based on their class and level.
-
-    This function determines a character's base stats and applies modifiers depending
-    on their class type. Each class type influences how much strength, magic, and health
-    they start with or gain per level.
+    Calculates a character's strength, magic, and health based on class and level.
 
     Args:
-        character_class (str): The type of character ("Warrior", "Mage", "Rogue", "Cleric").
-        level (int): The current level of the character.
+        character_class (str): Character's class ("Warrior", "Mage", "Rogue", "Cleric").
+        level (int): Character's level.
 
     Returns:
-        tuple: (strength, magic, health) values if valid class, else None.
+        tuple or None: (strength, magic, health) if valid class, else None.
     """
     # Base stats scale linearly with level
     base_strength = 5 * level
     base_magic = 5 * level
     base_health = 80 + 10 * level
 
-    # Normalize class name
-    cls = str(character_class).lower()
+    # Normalize class string
+    cls = str(character_class).lower() if character_class is not None else ""
 
-    # Determine stats based on class type
+    # Assign stats based on class type
     if cls == "warrior":
         strength = base_strength + 10
         magic = base_magic - 2 if base_magic >= 2 else 0
@@ -47,37 +43,46 @@ def calculate_stats(character_class, level):
         magic = base_magic + 8
         health = base_health + 15
     else:
-        return None  # Invalid class, cannot calculate stats
+        return None  # Invalid class
 
     return (strength, magic, health)
 
 
 def create_character(name, character_class):
     """
-    Creates a new character dictionary with a default level, gold, and calculated stats.
+    Creates a character dictionary with default level, gold, and calculated stats.
 
     Args:
         name (str): Character's name.
-        character_class (str): Character's class type.
+        character_class (str): Character's class.
 
     Returns:
         dict or None: Character dictionary if valid, else None.
     """
-    # Start all characters at level 1
+    # Ensure name is string
+    if name is None:
+        name = "None"
+    else:
+        name = str(name)
+
+    # Start at level 1
     level = 1
-    # Generate base stats
+
+    # Calculate stats
     stats = calculate_stats(character_class, level)
     if stats is None:
-        return None  # Invalid class input
+        return None  # Invalid class
 
-    # Unpack calculated stats
+    # Unpack stats
     strength, magic, health = stats
-    gold = 100  # Default starting gold
 
-    # Create a dictionary storing all attributes
+    # Default starting gold
+    gold = 100
+
+    # Create character dictionary
     character = {
-        "name": str(name),
-        "class": str(character_class),
+        "name": name,
+        "class": str(character_class) if character_class is not None else "None",
         "level": level,
         "strength": strength,
         "magic": magic,
@@ -90,29 +95,28 @@ def create_character(name, character_class):
 
 def save_character(character, filename):
     """
-    Saves a character's data into a text file in a specific readable format.
-
-    The function checks for missing keys and invalid filenames before saving.
+    Saves a character dictionary to a text file in readable format.
 
     Args:
-        character (dict): Dictionary containing all character data.
-        filename (str): The name of the file to save into.
+        character (dict): Dictionary with character info.
+        filename (str): Name of file to save.
 
     Returns:
-        bool: True if successful, False if invalid data or file issues.
+        bool: True if saved successfully, False otherwise.
     """
-    # Ensure filename is valid and not a directory
+    # Validate filename
     if not filename or "/" in filename or "\\" in filename:
         return False
 
-    # Ensure all necessary keys exist
+    # Ensure all required keys exist
     keys = ["name", "class", "level", "strength", "magic", "health", "gold"]
     for key in keys:
         if key not in character:
             return False
 
-    # Write character data to a text file
-    file = open(filename, "w")
+    # Open file for writing
+    file = open(filename, "w", encoding="utf-8")
+    # Write each attribute
     file.write(f"Character Name: {character['name']}\n")
     file.write(f"Class: {character['class']}\n")
     file.write(f"Level: {character['level']}\n")
@@ -120,10 +124,11 @@ def save_character(character, filename):
     file.write(f"Magic: {character['magic']}\n")
     file.write(f"Health: {character['health']}\n")
     file.write(f"Gold: {character['gold']}\n")
+    # Close file
     file.close()
 
-    # Verify that the file exists by reopening it (no os module)
-    verify = open(filename, "r")
+    # Verify file content
+    verify = open(filename, "r", encoding="utf-8")
     lines = verify.readlines()
     verify.close()
 
@@ -133,42 +138,50 @@ def save_character(character, filename):
 
 def load_character(filename):
     """
-    Loads a character's information from a text file and rebuilds the dictionary.
-
-    Reads the saved file format and converts the data back into proper types.
+    Loads a character dictionary from a saved text file.
 
     Args:
-        filename (str): The file to load from.
+        filename (str): Name of file to load.
 
     Returns:
-        dict or None: Reconstructed character if successful, else None.
+        dict or None: Character dictionary if file is valid, else None.
     """
-    # Validate filename format
+    # Validate filename
     if not filename or "/" in filename or "\\" in filename:
         return None
 
-    # Try to open the file; if it fails (e.g., doesn't exist), handle gracefully
-    file = open(filename, "r") if file_exists(filename) else None
+    # Check if file exists by trying to open it
+    file = None
+    temp_file = None
+    temp_file = open(filename, "r", encoding="utf-8")
+    if temp_file:
+        file = temp_file
     if file is None:
         return None
 
+    # Read all lines
     lines = file.readlines()
+    # Close file
     file.close()
 
-    # Parse key-value pairs
+    # Initialize dictionary
     character = {}
+
+    # Parse lines
     for line in lines:
         if ":" in line:
             key, value = line.strip().split(":", 1)
             key = key.strip().lower()
             value = value.strip()
+            # Convert numeric fields to int
             if key in ["level", "strength", "magic", "health", "gold"]:
                 value = int(value)
+            # Map "character name" to "name"
             if key == "character name":
                 key = "name"
             character[key] = value
 
-    # Check for required fields
+    # Ensure all required fields exist
     required = ["name", "class", "level", "strength", "magic", "health", "gold"]
     for key in required:
         if key not in character:
@@ -177,35 +190,17 @@ def load_character(filename):
     return character
 
 
-def file_exists(filename):
-    """
-    Checks if a file exists without using os.path.
-
-    Args:
-        filename (str): File name to check.
-
-    Returns:
-        bool: True if the file can be opened for reading, False otherwise.
-    """
-    try_open = None
-    # Attempt to open file in read mode to verify existence
-    try_open = open(filename, "r")
-    if try_open:
-        try_open.close()
-        return True
-    return False
-
-
 def display_character(character):
     """
-    Displays a character's attributes in a formatted, readable layout.
+    Displays character's attributes in a readable layout.
 
     Args:
-        character (dict): The character dictionary containing all stats.
+        character (dict): Character dictionary.
 
     Returns:
         None
     """
+    # Print character sheet header
     print("=== CHARACTER SHEET ===")
     print(f"Name: {character['name']}")
     print(f"Class: {character['class']}")
@@ -218,27 +213,31 @@ def display_character(character):
 
 def level_up(character):
     """
-    Increases the character's level by one and recalculates their stats.
+    Increases character's level by one and recalculates stats.
 
     Args:
-        character (dict): Dictionary representing the current character.
+        character (dict): Character dictionary.
 
     Returns:
         None
     """
-    # Increase level count by one
+    # Increase level
     character["level"] += 1
-    # Recalculate new stats for this level
+    # Recalculate stats
     stats = calculate_stats(character["class"], character["level"])
     if stats:
-        # Update character's attributes
         character["strength"], character["magic"], character["health"] = stats
 
 
-# Optional testing section for manual verification
+# Optional testing
 if __name__ == "__main__":
-    hero = create_character("Aria", "Mage")  # Create example character
-    display_character(hero)                  # Show character details
-    save_character(hero, "aria.txt")         # Save to file
-    loaded = load_character("aria.txt")      # Reload from file
-    display_character(loaded)                # Display loaded character
+    # Create example character
+    hero = create_character("Aria", "Mage")
+    # Display character
+    display_character(hero)
+    # Save character to file
+    save_character(hero, "aria.txt")
+    # Load character back
+    loaded = load_character("aria.txt")
+    # Display loaded character
+    display_character(loaded)
