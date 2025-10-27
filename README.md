@@ -1,29 +1,29 @@
-Game Concept
+Game Concept:
 This RPG world lets players create characters like Warriors, Mages, Rogues, and Clerics. Each class has unique stat scaling for strength, magic, and health. For example, Mages get extra magic but lower health:
 elif cls == "mage":
     strength = base_strength - 3 if base_strength >= 3 else 0
     magic = base_magic + 10
     health = base_health - 10 if base_health >= 10 else 0
 
-Design Choices
+Design Choices:
 Stat formulas scale with level and reflect each class’s role in combat. Warriors are tanky, Mages are fragile but powerful, and Rogues are balanced. This logic is handled in:
 base_strength = 5 * level
 base_magic = 5 * level
 base_health = 80 + 10 * level
 
-Bonus Creative Features
+Bonus Creative Features:
 The code handles missing names or invalid classes gracefully. It also verifies file saves by reopening and checking contents. For example:
 check = open(filename, "r", encoding="utf-8")
 lines = check.readlines()
 return len(lines) > 0
 
-AI Usage
+AI Usage:
 AI helped improve clarity for testing. It suggested edge case handling like checking for missing keys. This is reflected in:
 for key in required_keys:
     if key not in character:
         return False
         
-How to Run
+How to Run:
 Save the code as character_creator.py and run it with Python. It creates a Mage named Aria, saves her to a file, loads her back, and levels her up. The test block shows this:
 if __name__ == "__main__":
     hero = create_character("Aria", "Mage")
