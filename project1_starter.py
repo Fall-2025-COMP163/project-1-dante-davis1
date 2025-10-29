@@ -20,35 +20,30 @@ def calculate_stats(character_class, level):
     Returns:
         tuple or None: (strength, magic, health) if valid class, else None.
     """
-    # Convert class to lowercase string for consistent comparison
     cls = str(character_class).lower() if character_class is not None else ""
-
-    # Base scaling with level
     base_strength = 5 * level
     base_magic = 5 * level
     base_health = 80 + 10 * level
 
-    # Assign stat bonuses based on class
     if cls == "warrior":
-        strength = base_strength + 10      # Strong physical boost
-        magic = base_magic - 2 if base_magic >= 2 else 0  # Slightly less magic
-        health = base_health + 40          # More health
+        strength = base_strength + 10
+        magic = base_magic - 2 if base_magic >= 2 else 0
+        health = base_health + 40
     elif cls == "mage":
-        strength = base_strength - 3 if base_strength >= 3 else 0  # Weak physical
-        magic = base_magic + 10            # Strong magic boost
-        health = base_health - 10 if base_health >= 10 else 0      # Lower health
+        strength = base_strength - 3 if base_strength >= 3 else 0
+        magic = base_magic + 10
+        health = base_health - 10 if base_health >= 10 else 0
     elif cls == "rogue":
-        strength = base_strength + 5       # Moderate strength
-        magic = base_magic                 # Average magic
-        health = base_health - 5 if base_health >= 5 else 0        # Slightly lower health
+        strength = base_strength + 5
+        magic = base_magic
+        health = base_health - 5 if base_health >= 5 else 0
     elif cls == "cleric":
-        strength = base_strength           # Normal strength
-        magic = base_magic + 8             # Good magic
-        health = base_health + 15          # Higher health
+        strength = base_strength
+        magic = base_magic + 8
+        health = base_health + 15
     else:
-        return None                        # Invalid class returns None
+        return None
 
-    # Return the computed stats as a tuple
     return (strength, magic, health)
 
 
@@ -66,27 +61,19 @@ def create_character(name, character_class):
     Returns:
         dict or None: Character dictionary if valid, else None.
     """
-    # Handle None name values gracefully
     if name is None:
         name = "None"
     else:
-        name = str(name)  # Ensure name is always a string
+        name = str(name)
 
-    # Default starting level
     level = 1
-
-    # Calculate initial stats
     stats = calculate_stats(character_class, level)
     if stats is None:
-        return None  # Return None if invalid class
+        return None
 
-    # Unpack calculated stats
     strength, magic, health = stats
-
-    # Starting gold for all characters
     gold = 100
 
-    # Create a character dictionary
     character = {
         "name": name,
         "class": str(character_class) if character_class is not None else "None",
@@ -97,7 +84,6 @@ def create_character(name, character_class):
         "gold": gold
     }
 
-    # Return the complete character
     return character
 
 
@@ -115,20 +101,16 @@ def save_character(character, filename):
     Returns:
         bool: True if save successful, False if fails.
     """
-    # Validate inputs (reject None, empty strings, or invalid paths)
     if character is None or not filename or filename.startswith("/"):
         return False
 
-    # Ensure all necessary keys exist before saving
     required_keys = ["name", "class", "level", "strength", "magic", "health", "gold"]
     for key in required_keys:
         if key not in character:
-            return False  # Missing data
+            return False
 
-    # Try to open the file (no try/except; we just check result afterward)
+    # Write character to file
     file = open(filename, "w", encoding="utf-8")
-
-    # Write all character info in a structured format
     file.write(f"Character Name: {character['name']}\n")
     file.write(f"Class: {character['class']}\n")
     file.write(f"Level: {character['level']}\n")
@@ -136,17 +118,33 @@ def save_character(character, filename):
     file.write(f"Magic: {character['magic']}\n")
     file.write(f"Health: {character['health']}\n")
     file.write(f"Gold: {character['gold']}\n")
-
-    # Close the file to finalize writing
     file.close()
 
-    # Reopen to verify the file was written correctly
-    check = open(filename, "r", encoding="utf-8")
-    lines = check.readlines()
-    check.close()
-
-    # Return True if file contains data, otherwise False
+    # Verify file has content
+    lines = read_file_lines(filename)
     return len(lines) > 0
+
+
+# ==============================
+# Helper: read_file_lines
+# ==============================
+def read_file_lines(filename):
+    """
+    Reads all lines from a file if it exists, else returns empty list.
+
+    Args:
+        filename (str): File name to read.
+
+    Returns:
+        list: List of lines, empty if file doesn't exist or invalid.
+    """
+    try:
+        file = open(filename, "r", encoding="utf-8")
+        lines = file.readlines()
+        file.close()
+        return lines
+    except:
+        return []  # Return empty list if file can't be opened
 
 
 # ==============================
@@ -162,48 +160,33 @@ def load_character(filename):
     Returns:
         dict or None: Loaded character dictionary, or None if fails.
     """
-    # Validate filename
     if not filename or filename.startswith("/"):
         return None
 
-    # Check if file actually exists
-    import os
-    if not os.path.exists(filename):
+    lines = read_file_lines(filename)
+    if not lines:
         return None
 
-    # Open and read all lines
-    file = open(filename, "r", encoding="utf-8")
-    lines = file.readlines()
-    file.close()
-
-    # Initialize an empty dictionary for character data
     character = {}
-
-    # Parse each line and extract values
     for line in lines:
         if ":" in line:
             key, value = line.strip().split(":", 1)
             key = key.strip().lower()
             value = value.strip()
 
-            # Convert "Character Name" key to "name"
             if key == "character name":
                 key = "name"
 
-            # Convert numeric values to integers
             if key in ["level", "strength", "magic", "health", "gold"]:
                 value = int(value)
 
-            # Add key-value pair to the dictionary
             character[key] = value
 
-    # Verify all required fields exist
     required = ["name", "class", "level", "strength", "magic", "health", "gold"]
     for field in required:
         if field not in character:
-            return None  # Return None if missing any
+            return None
 
-    # Return the loaded character
     return character
 
 
@@ -220,11 +203,9 @@ def display_character(character):
     Returns:
         None
     """
-    # If no character provided, exit silently
     if character is None:
         return None
 
-    # Print formatted character info
     print("=== CHARACTER SHEET ===")
     print(f"Name: {character['name']}")
     print(f"Class: {character['class']}")
@@ -233,8 +214,6 @@ def display_character(character):
     print(f"Magic: {character['magic']}")
     print(f"Health: {character['health']}")
     print(f"Gold: {character['gold']}")
-
-    # Must return None explicitly (to satisfy pytest)
     return None
 
 
@@ -251,21 +230,14 @@ def level_up(character):
     Returns:
         None
     """
-    # Ensure a valid character dictionary
     if character is None:
         return None
 
-    # Increment character's level
-    character["level"] = character["level"] + 1
-
-    # Recalculate stats based on new level
+    character["level"] += 1
     new_stats = calculate_stats(character["class"], character["level"])
-
-    # If valid stats returned, update the dictionary directly
     if new_stats is not None:
         character["strength"], character["magic"], character["health"] = new_stats
 
-    # Return None to indicate completion
     return None
 
 
@@ -273,11 +245,11 @@ def level_up(character):
 # Optional main test block
 # ==============================
 if __name__ == "__main__":
-    hero = create_character("Aria", "Mage")      # Create a test character
-    display_character(hero)                      # Display stats
-    save_character(hero, "aria.txt")             # Save to file
-    loaded = load_character("aria.txt")          # Load from file
-    display_character(loaded)                    # Display loaded stats
-    level_up(hero)                               # Level up once
-    display_character(hero)                      # Display after leveling up
+    hero = create_character("Aria", "Mage")
+    display_character(hero)
+    save_character(hero, "aria.txt")
+    loaded = load_character("aria.txt")
+    display_character(loaded)
+    level_up(hero)
+    display_character(hero)
 
